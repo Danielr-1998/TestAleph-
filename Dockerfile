@@ -30,7 +30,7 @@ RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Instala las dependencias de Composer
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install 
 
 # Exponer el puerto 80 para que el contenedor sea accesible en ese puerto
 EXPOSE 80
