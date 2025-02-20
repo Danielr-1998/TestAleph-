@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: my-laravel-app
+    env: php
+    buildCommand: "composer install --no-dev --optimize-autoloader"
+    startCommand: "php artisan serve --host 0.0.0.0 --port 80"
+    plan: free
+    branch: main

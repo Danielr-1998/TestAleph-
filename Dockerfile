@@ -1,7 +1,7 @@
-# Usar la imagen oficial de PHP con Apache
+# Usa una imagen base oficial de PHP con Apache
 FROM php:8.1-apache
 
-# Instalar dependencias necesarias para Laravel
+# Instala dependencias necesarias para Laravel y Composer
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -9,29 +9,31 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
+    libxml2-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_mysql zip
 
-# Instalar Composer
+# Instala Composer (gestor de dependencias de PHP)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Verificar que Composer se instaló correctamente
+# Verifica que Composer se haya instalado correctamente
 RUN composer --version
 
-# Copiar archivos de la aplicación a /var/www/html
+# Copia el archivo .env y el resto de la aplicación
 COPY . /var/www/html
 
-# Establecer el directorio de trabajo
+# Configura el directorio de trabajo
 WORKDIR /var/www/html
 
-# Instalar dependencias de Composer
+# Establece el propietario adecuado para los archivos y carpetas de Laravel
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Instala las dependencias de Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Configurar los permisos de los directorios
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Exponer el puerto 80
+# Exponer el puerto 80 para que el contenedor sea accesible en ese puerto
 EXPOSE 80
 
-# Configurar el contenedor para ejecutar el servidor Apache
+# Inicia el servidor Apache para servir la aplicación
 CMD ["apache2-foreground"]
