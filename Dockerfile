@@ -1,39 +1,40 @@
-# Usa una imagen base oficial de PHP con Apache
-FROM php:8.1-apache
+# Usa una imagen base oficial de PHP 8.2 con Apache
+FROM php:8.2-apache
 
-# Instala dependencias necesarias para Laravel y Composer
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    unzip \
-    git \
-    libxml2-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql zip
-
-# Instala Composer (gestor de dependencias de PHP)
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Verifica que Composer se haya instalado correctamente
-RUN composer --version
-
-# Copia el archivo .env y el resto de la aplicación
-COPY . /var/www/html
-
-# Configura el directorio de trabajo
+# Establecer el directorio de trabajo
 WORKDIR /var/www/html
 
-# Establece el propietario adecuado para los archivos y carpetas de Laravel
-RUN chown -R www-data:www-data /var/www/html
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Instalar dependencias necesarias (como librerías para Laravel)
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    git \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd zip pdo pdo_mysql
 
-# Instala las dependencias de Composer
-RUN composer install 
+# Habilitar el módulo de rewrite de Apache para Laravel
+RUN a2enmod rewrite
 
-# Exponer el puerto 80 para que el contenedor sea accesible en ese puerto
+# Copiar el archivo composer.phar (si no se tiene Composer previamente instalado)
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Copiar todos los archivos del proyecto al contenedor
+COPY . /var/www/html
+
+# Copiar los archivos de configuración de Apache si es necesario (si tienes un archivo .conf)
+# COPY ./path/to/apache.conf /etc/apache2/sites-available/000-default.conf
+
+# Configurar permisos para directorios de almacenamiento y caché
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Ejecutar Composer para instalar dependencias de Laravel
+RUN composer install --no-dev --optimize-autoloader
+
+# Exponer el puerto 80 para Apache
 EXPOSE 80
 
-# Inicia el servidor Apache para servir la aplicación
+# Configurar el comando que se ejecutará al iniciar el contenedor
 CMD ["apache2-foreground"]

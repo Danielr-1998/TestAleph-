@@ -16,14 +16,19 @@ class CategoryController extends Controller
 
     public function index()
     {
-        // Obtener las categorías a través del servicio
         $categorias = $this->alephService->getCategories();
 
-        // Verificamos si la respuesta tiene categorías
         if ($categorias && !isset($categorias->error)) {
             return view('categories.index', ['categorias' => $categorias]);
         }
 
         return view('categories.index', ['error' => 'No se pudieron obtener las categorías.']);
     }
+
+    public function showCmdbRecords($id)
+    {
+        $cmdb = $this->alephService->getCmdbRecords($id);
+        return view('categories.cmdb_records', compact('cmdb'));
+    }
+
 }

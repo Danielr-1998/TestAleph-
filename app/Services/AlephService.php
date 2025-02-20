@@ -14,11 +14,10 @@ class AlephService
     public function __construct()
     {
         $this->client = new Client();
-        $this->apiKey = env('API_KEY');  // Recupera la API Key del archivo .env
-        $this->baseUrl = env('BASE_API_URL');  // URL base de la API
+        $this->apiKey = env('API_KEY');  
+        $this->baseUrl = env('BASE_API_URL');  
     }
 
-    // Método para obtener las categorías de la API de Aleph
     public function getCategories()
     {
         try {
@@ -35,43 +34,46 @@ class AlephService
                 ],
             ]);
 
-            // Decodificar la respuesta JSON y convertirla en un objeto
             $responseData = json_decode($response->getBody()->getContents(), false);
 
-            // Verificar si la clave 'categorias' existe y devolverla
             if (isset($responseData->categorias)) {
                 return $responseData->categorias;
             }
 
-            // En caso de que no haya categorías
             Log::error('No se encontraron categorías en la respuesta de la API.');
             return null;
 
         } catch (\Exception $e) {
-            // Si hay algún error, registrar el error
             Log::error('Error al conectar con la API de Aleph: ' . $e->getMessage());
-            return null; // Devolver null en caso de error
+            return null; 
         }
     }
 
-    // Método para obtener los registros de la CMDB de una categoría específica
     public function getCmdbRecords($categoryId)
     {
         try {
-            // Hacer la solicitud GET a la API de Aleph para obtener los registros de la CMDB
-            $response = $this->client->get("https://subdominioentidad.alephmanager.com/API/get_cmdb/{$categoryId}", [
+            $response = $this->client->post($this->baseUrl . 'API/get_cmdb', [
+                'form_params' => [
+                    'api_key' => $this->apiKey,
+                    'categoria_id' => $categoryId,
+                ],
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->apiKey, // Agregar el API Key en los headers
+                    'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
             ]);
 
-            // Decodificar la respuesta JSON y devolverla
-            return json_decode($response->getBody()->getContents(), false);
+            
+            
+            $responseData = json_decode($response->getBody()->getContents(), false);
+
+            if (isset($responseData->cmdb)) {
+                return $responseData->cmdb;
+            }
+          
 
         } catch (\Exception $e) {
-            // Si hay algún error, registrar el error
             Log::error('Error al obtener los registros de la CMDB: ' . $e->getMessage());
-            return null; // Devolver null en caso de error
+            return null; 
         }
     }
 }
